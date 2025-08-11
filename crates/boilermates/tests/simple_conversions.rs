@@ -2,7 +2,7 @@ use boilermates::boilermates;
 
 #[test]
 fn correct_conversion() {
-    #[boilermates("Step2", "Step3")]
+    #[boilermates(Step2, Step3)]
     #[boilermates(attr_for("Step2", "#[derive(Clone)]"))]
     #[derive(Clone)]
     struct Step1 {

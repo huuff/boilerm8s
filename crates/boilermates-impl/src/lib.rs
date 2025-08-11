@@ -267,7 +267,7 @@ mod test {
     #[test]
     fn snapshot_test() {
         let output = boilermates(
-            quote! { "StructWithX", "StructWithoutY" },
+            quote! { StructWithX, StructWithoutY },
             quote! {
               pub struct MainStruct {
                 pub field: String,

@@ -41,17 +41,12 @@ impl OutputStructs {
             },
         );
 
-        for attr in syn::punctuated::Punctuated::<syn::Lit, syn::Token![,]>::parse_terminated
+        for attr in syn::punctuated::Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated
             .parse2(attrs)
             .unwrap()
-            .into_iter()
         {
-            if let syn::Lit::Str(lit) = attr {
-                let struct_name = lit.value();
-                output.0.insert(struct_name, Default::default());
-            } else {
-                panic!("Expected a string literal")
-            }
+
+                output.0.insert(attr.to_string(), Default::default());
         }
 
         Ok(output)
