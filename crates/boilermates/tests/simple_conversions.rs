@@ -7,9 +7,9 @@ fn correct_conversion() {
     #[derive(Clone)]
     struct Step1 {
         field1: String,
-        #[boilermates(not_in("Step1"))]
+        #[boilermates(not_in(Step1))]
         field2: u32,
-        #[boilermates(only_in("Step3"))]
+        #[boilermates(only_in(Step3))]
         field3: f64,
     }
 

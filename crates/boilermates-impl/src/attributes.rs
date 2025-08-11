@@ -152,12 +152,10 @@ fn extract_nested_list(meta_list: &MetaList) -> anyhow::Result<Vec<String>> {
     use syn::punctuated::Punctuated;
 
     let nested =
-        Punctuated::<Lit, syn::Token![,]>::parse_terminated.parse2(meta_list.tokens.clone())?;
-    nested
+        Punctuated::<syn::Ident, syn::Token![,]>::parse_terminated.parse2(meta_list.tokens.clone())?;
+
+    Ok(nested
         .into_iter()
-        .map(|n| match n {
-            Lit::Str(lit) => Ok(lit.value()),
-            _ => anyhow::bail!("Expected a string literal"),
-        })
-        .collect()
+        .map(|n| n.to_string())
+        .collect())
 }
