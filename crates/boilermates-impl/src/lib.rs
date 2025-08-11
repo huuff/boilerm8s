@@ -274,9 +274,9 @@ mod test {
             quote! {
               pub struct MainStruct {
                 pub field: String,
-                #[boilermates(only_in = "StructWithX")]
+                #[boilermates(only_in("StructWithX"))]
                 pub x: u32,
-                #[boilermates(not_in = "StructWithoutY")]
+                #[boilermates(not_in("StructWithoutY"))]
                 pub y: i32,
               }
             },

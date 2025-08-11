@@ -35,18 +35,18 @@ impl OutputStructs {
         attributes: item.attrs.clone(),
       });
 
-      for attr in syn::punctuated::Punctuated::<syn::NestedMeta, syn::Token![,]>::parse_terminated
+      for attr in syn::punctuated::Punctuated::<syn::Lit, syn::Token![,]>::parse_terminated
         .parse2(attrs)
         .unwrap()
         .into_iter() {
         match attr {
-            syn::NestedMeta::Lit(::syn::Lit::Str(lit)) => {
-                let struct_name = lit.value().trim_matches('"').to_owned();
+            syn::Lit::Str(lit) => {
+                let struct_name = lit.value();
                 output.0.insert(struct_name, Default::default());
             }
             _ => panic!("Expected a string literal"),
         }
-        }
+      }
 
       Ok(output)
     }
