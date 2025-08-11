@@ -8,10 +8,7 @@ use itertools::Itertools;
 use model::{OutputField, OutputStructs};
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{
-    Data, DataStruct, DeriveInput, Field,
-    Fields, FieldsNamed,
-};
+use syn::{Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed};
 
 pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
     let mut item: DeriveInput = syn::parse2(item).unwrap();
@@ -270,13 +267,13 @@ mod test {
     #[test]
     fn snapshot_test() {
         let output = boilermates(
-            quote! { "StructWithX", "StructWithoutY" },
+            quote! { StructWithX, StructWithoutY },
             quote! {
               pub struct MainStruct {
                 pub field: String,
-                #[boilermates(only_in = "StructWithX")]
+                #[boilermates(only_in(StructWithX))]
                 pub x: u32,
-                #[boilermates(not_in = "StructWithoutY")]
+                #[boilermates(not_in(StructWithoutY))]
                 pub y: i32,
               }
             },

@@ -2,79 +2,74 @@
 source: crates/boilermates-impl/src/lib.rs
 expression: pretty_print(output)
 ---
-pub struct StructWithX {
-    pub field: String,
-    #[boilermates(only_in = "StructWithX")]
-    pub x: u32,
-    #[boilermates(not_in = "StructWithoutY")]
-    pub y: i32,
-}
-impl From<StructWithoutY> for StructWithX {
-    fn from(other: StructWithoutY) -> Self {
-        Self {
-            field: other.field,
-            x: other.x,
-            y: other.y,
-        }
-    }
-}
-impl From<MainStruct> for StructWithX {
-    fn from(other: MainStruct) -> Self {
-        Self {
-            field: other.field,
-            x: other.x,
-            y: other.y,
-        }
-    }
-}
-pub struct StructWithoutY {
-    pub field: String,
-    #[boilermates(only_in = "StructWithX")]
-    pub x: u32,
-    #[boilermates(not_in = "StructWithoutY")]
-    pub y: i32,
-}
-impl From<StructWithX> for StructWithoutY {
-    fn from(other: StructWithX) -> Self {
-        Self {
-            field: other.field,
-            x: other.x,
-            y: other.y,
-        }
-    }
-}
-impl From<MainStruct> for StructWithoutY {
-    fn from(other: MainStruct) -> Self {
-        Self {
-            field: other.field,
-            x: other.x,
-            y: other.y,
-        }
-    }
-}
 pub struct MainStruct {
     pub field: String,
-    #[boilermates(only_in = "StructWithX")]
-    pub x: u32,
-    #[boilermates(not_in = "StructWithoutY")]
     pub y: i32,
 }
 impl From<StructWithX> for MainStruct {
     fn from(other: StructWithX) -> Self {
         Self {
             field: other.field,
-            x: other.x,
             y: other.y,
         }
     }
 }
-impl From<StructWithoutY> for MainStruct {
-    fn from(other: StructWithoutY) -> Self {
-        Self {
-            field: other.field,
-            x: other.x,
-            y: other.y,
+impl StructWithoutY {
+    pub fn into_main_struct(self, y: i32) -> MainStruct {
+        MainStruct { field: self.field, y }
+    }
+    pub fn into_main_struct_defaults(self, y: i32) -> MainStruct {
+        MainStruct { field: self.field, y }
+    }
+}
+pub struct StructWithX {
+    pub field: String,
+    pub x: u32,
+    pub y: i32,
+}
+impl MainStruct {
+    pub fn into_struct_with_x(self, x: u32) -> StructWithX {
+        StructWithX {
+            field: self.field,
+            y: self.y,
+            x,
         }
+    }
+    pub fn into_struct_with_x_defaults(self, x: u32) -> StructWithX {
+        StructWithX {
+            field: self.field,
+            y: self.y,
+            x,
+        }
+    }
+}
+impl StructWithoutY {
+    pub fn into_struct_with_x(self, x: u32, y: i32) -> StructWithX {
+        StructWithX {
+            field: self.field,
+            x,
+            y,
+        }
+    }
+    pub fn into_struct_with_x_defaults(self, x: u32, y: i32) -> StructWithX {
+        StructWithX {
+            field: self.field,
+            x,
+            y,
+        }
+    }
+}
+pub struct StructWithoutY {
+    pub field: String,
+}
+impl From<MainStruct> for StructWithoutY {
+    fn from(other: MainStruct) -> Self {
+        Self { field: other.field }
+    }
+}
+impl From<StructWithX> for StructWithoutY {
+    fn from(other: StructWithX) -> Self {
+        Self { field: other.field }
     }
 }
 trait HasField {
@@ -82,6 +77,14 @@ trait HasField {
     fn set_field(&mut self, value: String);
 }
 trait HasNoField {}
+impl HasField for MainStruct {
+    fn field(&self) -> &String {
+        &self.field
+    }
+    fn set_field(&mut self, value: String) {
+        self.field = value;
+    }
+}
 impl HasField for StructWithX {
     fn field(&self) -> &String {
         &self.field
@@ -98,19 +101,12 @@ impl HasField for StructWithoutY {
         self.field = value;
     }
 }
-impl HasField for MainStruct {
-    fn field(&self) -> &String {
-        &self.field
-    }
-    fn set_field(&mut self, value: String) {
-        self.field = value;
-    }
-}
 trait HasX {
     fn x(&self) -> &u32;
     fn set_x(&mut self, value: u32);
 }
 trait HasNoX {}
+impl HasNoX for MainStruct {}
 impl HasX for StructWithX {
     fn x(&self) -> &u32 {
         &self.x
@@ -119,43 +115,12 @@ impl HasX for StructWithX {
         self.x = value;
     }
 }
-impl HasX for StructWithoutY {
-    fn x(&self) -> &u32 {
-        &self.x
-    }
-    fn set_x(&mut self, value: u32) {
-        self.x = value;
-    }
-}
-impl HasX for MainStruct {
-    fn x(&self) -> &u32 {
-        &self.x
-    }
-    fn set_x(&mut self, value: u32) {
-        self.x = value;
-    }
-}
+impl HasNoX for StructWithoutY {}
 trait HasY {
     fn y(&self) -> &i32;
     fn set_y(&mut self, value: i32);
 }
 trait HasNoY {}
-impl HasY for StructWithX {
-    fn y(&self) -> &i32 {
-        &self.y
-    }
-    fn set_y(&mut self, value: i32) {
-        self.y = value;
-    }
-}
-impl HasY for StructWithoutY {
-    fn y(&self) -> &i32 {
-        &self.y
-    }
-    fn set_y(&mut self, value: i32) {
-        self.y = value;
-    }
-}
 impl HasY for MainStruct {
     fn y(&self) -> &i32 {
         &self.y
@@ -164,3 +129,12 @@ impl HasY for MainStruct {
         self.y = value;
     }
 }
+impl HasY for StructWithX {
+    fn y(&self) -> &i32 {
+        &self.y
+    }
+    fn set_y(&mut self, value: i32) {
+        self.y = value;
+    }
+}
+impl HasNoY for StructWithoutY {}
