@@ -23,36 +23,42 @@ impl OutputStructs {
     pub fn names(&self) -> impl Iterator<Item = &str> {
         self.0.keys().map(|it| it.as_str())
     }
-    
+
     /// Initializes the output with the main struct and all the mates
-    pub fn initialize(item: &syn::DeriveInput, attrs: proc_macro2::TokenStream) -> Result<Self, anyhow::Error> {
-      use syn::parse::Parser as _;
+    pub fn initialize(
+        item: &syn::DeriveInput,
+        attrs: proc_macro2::TokenStream,
+    ) -> Result<Self, anyhow::Error> {
+        use syn::parse::Parser as _;
 
-      let mut output = Self::default();
+        let mut output = Self::default();
 
-      output.0.insert(item.ident.to_string(), OutputStruct {
-        fields: Default::default(),
-        attributes: item.attrs.clone(),
-      });
+        output.0.insert(
+            item.ident.to_string(),
+            OutputStruct {
+                fields: Default::default(),
+                attributes: item.attrs.clone(),
+            },
+        );
 
-      for attr in syn::punctuated::Punctuated::<syn::Lit, syn::Token![,]>::parse_terminated
-        .parse2(attrs)
-        .unwrap()
-        .into_iter() {
-        match attr {
-            syn::Lit::Str(lit) => {
+        for attr in syn::punctuated::Punctuated::<syn::Lit, syn::Token![,]>::parse_terminated
+            .parse2(attrs)
+            .unwrap()
+            .into_iter()
+        {
+            if let syn::Lit::Str(lit) = attr {
                 let struct_name = lit.value();
                 output.0.insert(struct_name, Default::default());
+            } else {
+                panic!("Expected a string literal")
             }
-            _ => panic!("Expected a string literal"),
         }
-      }
 
-      Ok(output)
+        Ok(output)
     }
 
     pub fn get_mut(&mut self, name: &str) -> Option<&mut OutputStruct> {
-      self.0.get_mut(name)
+        self.0.get_mut(name)
     }
 }
 

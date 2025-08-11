@@ -32,10 +32,16 @@ impl BoilermatesStructAttribute {
                                 BoilermatesAttrFor::try_from(attr)?,
                             ))
                         }
-                        _ => Err(anyhow::anyhow!("unknown boilermates attribute: `{}`", quote::quote!(#meta))),
+                        _ => Err(anyhow::anyhow!(
+                            "unknown boilermates attribute: `{}`",
+                            quote::quote!(#meta)
+                        )),
                     }
                 }
-                _ => Err(anyhow::anyhow!("unknown boilermates attribute: `{}`", quote::quote!(#attr))),
+                _ => Err(anyhow::anyhow!(
+                    "unknown boilermates attribute: `{}`",
+                    quote::quote!(#attr)
+                )),
             })
             .try_collect()
     }
@@ -52,8 +58,8 @@ impl TryFrom<MetaList> for BoilermatesAttrFor {
         use syn::parse::Parser;
         use syn::punctuated::Punctuated;
 
-        let nested = Punctuated::<Lit, syn::Token![,]>::parse_terminated
-            .parse2(list_attr.tokens)?;
+        let nested =
+            Punctuated::<Lit, syn::Token![,]>::parse_terminated.parse2(list_attr.tokens)?;
 
         if nested.len() != 2 {
             anyhow::bail!("`#[boilermates(attr_for(...))]` must have two string literal arguments");
@@ -126,10 +132,16 @@ impl BoilermatesFieldAttribute {
                         Meta::Path(path) if path.is_ident("only_in_self") => {
                             Ok(BoilermatesFieldAttribute::OnlyInSelf)
                         }
-                        _ => anyhow::bail!("unknown boilermates attribute: `{}`", quote::quote!(#meta)),
+                        _ => anyhow::bail!(
+                            "unknown boilermates attribute: `{}`",
+                            quote::quote!(#meta)
+                        ),
                     }
                 }
-                _ => Err(anyhow::anyhow!("unknown boilermates attribute: `{}`", quote::quote!(#attr))),
+                _ => Err(anyhow::anyhow!(
+                    "unknown boilermates attribute: `{}`",
+                    quote::quote!(#attr)
+                )),
             })
             .try_collect()
     }
@@ -139,8 +151,8 @@ fn extract_nested_list(meta_list: &MetaList) -> anyhow::Result<Vec<String>> {
     use syn::parse::Parser;
     use syn::punctuated::Punctuated;
 
-    let nested = Punctuated::<Lit, syn::Token![,]>::parse_terminated
-        .parse2(meta_list.tokens.clone())?;
+    let nested =
+        Punctuated::<Lit, syn::Token![,]>::parse_terminated.parse2(meta_list.tokens.clone())?;
     nested
         .into_iter()
         .map(|n| match n {

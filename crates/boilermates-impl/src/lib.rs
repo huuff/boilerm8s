@@ -8,10 +8,7 @@ use itertools::Itertools;
 use model::{OutputField, OutputStructs};
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
-use syn::{
-    Data, DataStruct, DeriveInput, Field,
-    Fields, FieldsNamed,
-};
+use syn::{Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed};
 
 pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
     let mut item: DeriveInput = syn::parse2(item).unwrap();
