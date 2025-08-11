@@ -1,6 +1,5 @@
-use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Attribute, Lit, Meta, MetaList};
+use syn::{parse_quote, Attribute, Meta, MetaList};
 
 nestify::nest! {
   pub enum BoilermatesStructAttribute {
@@ -29,7 +28,7 @@ impl BoilermatesStructAttribute {
                     match meta {
                         Meta::List(attr) if attr.path.is_ident("attr_for") => {
                             Ok(BoilermatesStructAttribute::AttrFor(
-                                BoilermatesAttrFor::try_from(attr)?,
+                                syn::parse2(attr.tokens)?,
                             ))
                         }
                         _ => Err(anyhow::anyhow!(
@@ -51,41 +50,21 @@ fn is_boilermates(attr: &Attribute) -> bool {
     attr.path().is_ident("boilermates")
 }
 
-impl TryFrom<MetaList> for BoilermatesAttrFor {
-    type Error = anyhow::Error;
+impl syn::parse::Parse for BoilermatesAttrFor {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let target_struct: syn::Ident = input.parse()?;
+        input.parse::<syn::Token![,]>()?;
+        let attrs: proc_macro2::TokenStream = input.parse()?;
 
-    fn try_from(list_attr: MetaList) -> Result<Self, Self::Error> {
-        use syn::parse::Parser;
-        use syn::punctuated::Punctuated;
+        Ok(Self {
+            target_struct: target_struct.to_string(),
+            attribute: {
+                // TODO: there must be a better way
+                let q = quote! { #attrs };
+                parse_quote! { # q }
+            },
+        })
 
-        let nested =
-            Punctuated::<Lit, syn::Token![,]>::parse_terminated.parse2(list_attr.tokens)?;
-
-        if nested.len() != 2 {
-            anyhow::bail!("`#[boilermates(attr_for(...))]` must have two string literal arguments");
-        }
-
-        let mut list_iter = nested.into_iter();
-
-        match (
-            list_iter.next().expect("we just checked length is 2"),
-            list_iter.next().expect("we just checked length is 2"),
-        ) {
-            (Lit::Str(struct_name), Lit::Str(attr_list)) => Ok(Self {
-                target_struct: struct_name.value(),
-                attribute: {
-                    let token_stream: TokenStream = attr_list
-                        .value()
-                        .parse::<TokenStream>()
-                        .map_err(|_| anyhow::anyhow!("can't parse attr"))?;
-                    let q = quote! { #token_stream };
-                    parse_quote! { #q }
-                },
-            }),
-            _ => anyhow::bail!(
-                "`#[boilermates(attr_for(...))]` must have two string literal arguments"
-            ),
-        }
     }
 }
 
