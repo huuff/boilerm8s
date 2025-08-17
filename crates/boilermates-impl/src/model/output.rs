@@ -1,6 +1,7 @@
 use derive_more::{Constructor, IntoIterator};
-use heck::ToPascalCase as _;
 use indexmap::IndexMap;
+
+use super::fields::BoilermatesField;
 
 nestify::nest! {
   // XXX: Use an indexmap so it's insertion order and deterministic
@@ -45,8 +46,7 @@ impl OutputStructs {
             .parse2(attrs)
             .unwrap()
         {
-
-                output.0.insert(attr.to_string(), Default::default());
+            output.0.insert(attr.to_string(), Default::default());
         }
 
         Ok(output)
@@ -77,26 +77,19 @@ impl OutputStruct {
     }
 }
 
+impl From<BoilermatesField> for OutputField {
+    fn from(value: BoilermatesField) -> Self {
+        Self::new(value.definition, value.default)
+    }
+}
+
 impl OutputField {
+    // TODO: Pretty much copy-paste from `BoilermatesField`, DRY?
     pub fn name(&self) -> syn::Ident {
         self.definition
             .ident
             .clone()
             .unwrap_or_else(|| panic!("Can't get field name. This should never happen."))
-    }
-
-    pub fn trait_name(&self) -> syn::Ident {
-        syn::Ident::new(
-            &format!("Has{}", &self.name().to_string().to_pascal_case()),
-            proc_macro2::Span::call_site(),
-        )
-    }
-
-    pub fn neg_trait_name(&self) -> syn::Ident {
-        syn::Ident::new(
-            &format!("HasNo{}", &self.name().to_string().to_pascal_case()),
-            proc_macro2::Span::call_site(),
-        )
     }
 }
 
