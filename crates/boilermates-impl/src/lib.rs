@@ -1,11 +1,11 @@
 mod attributes;
 mod model;
+mod traits;
 mod util;
 
-use attributes::{BoilermatesFieldAttribute, BoilermatesStructAttribute};
+use attributes::BoilermatesStructAttribute;
 use heck::ToSnakeCase;
-use itertools::Itertools;
-use model::{OutputField, OutputStructs};
+use model::{fields::BoilermatesField, output::OutputStructs};
 use proc_macro2::{Ident, Span, TokenStream as TokenStream2};
 use quote::quote;
 use syn::{Data, DataStruct, DeriveInput, Field, Fields, FieldsNamed};
@@ -21,7 +21,7 @@ pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
         panic!("Expected a struct");
     };
 
-    let Fields::Named(mut fields) = data_struct.fields.clone() else {
+    let Fields::Named(fields) = data_struct.fields.clone() else {
         panic!("Expected a struct with named fields");
     };
 
@@ -37,24 +37,17 @@ pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
         }
     }
 
+
+
+    let boilermates_fields = BoilermatesField::parse_all(
+        fields.named,
+        structs.names().map(<_>::to_owned).collect(),
+        item.ident.to_string(),
+    );
+
+    // setup field traits
     let mut traits = quote! {};
-
-    fields.named.iter_mut().for_each(|field| {
-        let mut add_to = structs.names().map(<_>::to_owned).collect_vec();
-        let mut default = false;
-
-        for boilermates_attr in BoilermatesFieldAttribute::extract(&mut field.attrs).unwrap() {
-            match boilermates_attr {
-                BoilermatesFieldAttribute::OnlyIn(only_in) => add_to = only_in.0,
-                BoilermatesFieldAttribute::NotIn(not_in) => {
-                    add_to.retain(|strukt| !not_in.0.contains(&strukt))
-                }
-                BoilermatesFieldAttribute::Default => default = true,
-                BoilermatesFieldAttribute::OnlyInSelf => add_to = vec![item.ident.to_string()],
-            }
-        }
-
-        let field = OutputField::new(field.clone(), default);
+    for field in &boilermates_fields {
         let trait_name = field.trait_name();
         let neg_trait_name = field.neg_trait_name();
         let field_name = field.name();
@@ -70,13 +63,11 @@ pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
             trait #neg_trait_name {}
         };
 
-        for (struct_name, strukt) in &mut structs {
+        for (struct_name, _) in &mut structs {
             // MAYBE we don't need to store names and strings and can store idents directly?
             let struct_ident = Ident::new(struct_name, Span::call_site());
 
-            if add_to.contains(struct_name) {
-                strukt.fields.push(field.clone());
-
+            if field.in_structs.contains(struct_name) {
                 traits = quote! {
                     #traits
                     impl #trait_name for #struct_ident {
@@ -96,7 +87,15 @@ pub fn boilermates(attrs: TokenStream2, item: TokenStream2) -> TokenStream2 {
                 };
             }
         }
-    });
+    }
+
+    for field in boilermates_fields {
+        for (struct_name, strukt) in &mut structs {
+            if field.in_structs.contains(struct_name) {
+                strukt.fields.push(field.clone().into());
+            }
+        }
+    }
 
     let mut output = quote! {};
     for (name, strukt) in &structs {
